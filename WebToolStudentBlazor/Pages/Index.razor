@@ -1,0 +1,202 @@
+﻿@page "/"
+
+@using WebToolStudentBlazor.Models
+@using WebToolStudentBlazor.Services
+
+@inject StudentsServices studentservices
+
+<div class="mat-layout-grid-cell mat-layout-grid-cell-span-8">
+
+    @if (studentlist == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <MatTable Items="@studentlist" class="mat-elevation-z5" Style="font-size:small">
+            <MatTableHeader>
+
+                <th Style="font-size:small">StudentId</th>
+                <th Style="font-size:small">First Name</th>
+                <th Style="font-size:small">M.I</th>
+                <th Style="font-size:small">Last Name</th>
+                <th Style="font-size:small">Birth Date</th>
+                <th Style="font-size:small">Address</th>
+                <th Style="font-size:small">Email Address</th>
+                <th Style="font-size:small"></th>
+
+
+            </MatTableHeader>
+
+            <MatTableRow>
+
+                <td>@context.id</td>
+                <td>@context.fname</td>
+                <td>@context.mi</td>
+                <td>@context.lname</td>
+                <td>@context.bdate.ToShortDateString()</td>
+                <td>@context.address</td>
+                <td>@context.email</td>
+                <td>
+                    <MatIconButton>
+                        <MatIcon  @onclick="(() => EditStudent(context.id))">@MatIconNames.Edit</MatIcon>
+                    </MatIconButton>
+                    <MatIconButton>
+                        <MatIcon @onclick="(() => DeleteStudent2(context.id))" >@MatIconNames.Delete</MatIcon>
+                    </MatIconButton>
+                </td>
+
+            </MatTableRow>
+
+
+        </MatTable>
+    }
+</div>
+<MatPaper style="padding: 10px 10px 10px 10px;" Elevation="8" Rounded="true">
+
+    <div class="form-group">
+        <MatTextField @bind-Value="@stu.id" class="form-control" Label="Student ID No." ReadOnly="true"></MatTextField>
+    </div>
+    <div class="form-group">
+
+        <MatTextField @bind-Value="@stu.fname" class="form-control" Label="First Name"></MatTextField>
+    </div>
+    <div class="form-group">
+
+        <MatTextField @bind-Value="@stu.mi" class="form-control" Label="Middle Initial"></MatTextField>
+    </div>
+    <div class="form-group">
+        <MatTextField @bind-Value="@stu.lname" class="form-control" Label="Last Name"></MatTextField>
+    </div>
+    @*type="date" format-value="yyyy-MM-dd"*@
+    <div class="form-group">
+        <MatTextField @bind-Value="@stu.address" class="form-control" Label="Address"></MatTextField>
+    </div>
+    <div class="form-group">
+        <MatDatePicker class="form-control" Label="Birthday" @bind-Value="@stu.bdate"></MatDatePicker>
+    </div>
+    <div class="form-group">
+        <MatTextField @bind-Value="@stu.email" class="form-control" Label="Email"></MatTextField>
+    </div>
+    <br />
+
+    <MatButton Disabled="@btnsave" Raised="true" Icon="save" @onclick="(() => AddStudent())">Save</MatButton>
+
+
+    <MatButton Raised="true" Icon="update" @onclick="(() => UpdateStudent())">Update</MatButton>
+
+
+    <div>
+        <label>@Message</label>
+    </div>
+
+</MatPaper>
+
+@code  {
+
+    string Message = "";
+    Students stu = new Students();
+    Students[] studentlist;
+
+    bool btnsave = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        studentlist = await studentservices.StudentGetData();
+    }
+    private async void AddStudent()
+    {
+        var studentData = new Students
+        {
+            id = stu.id,
+            fname = stu.fname,
+            mi = stu.mi,
+            lname = stu.lname,
+            bdate = stu.bdate,
+            address = stu.address,
+            email = stu.email
+        };
+
+        var i = await studentservices.AddStudent(studentData).ConfigureAwait(false);
+
+        if (i > 0)
+        {
+            Message = "Successfully saved!";
+
+        }
+        studentlist = await studentservices.StudentGetData();
+    }
+
+    private void EditStudent(int Idparam)
+    {
+        Students[] studenEdit;
+
+        var dd = from s in studentlist
+                 where s.id == Idparam
+                 select s;
+        studenEdit = dd.ToArray();
+
+        stu = new Students
+        {
+            id = studenEdit[0].id,
+            fname = studenEdit[0].fname,
+            mi = studenEdit[0].mi,
+            lname = studenEdit[0].lname,
+            bdate = studenEdit[0].bdate,
+            address = studenEdit[0].address,
+            email = studenEdit[0].email
+        };
+        btnsave = true;
+    }
+
+    private async void DeleteStudent2(int Idparam)
+    {
+
+
+        stu = new Students
+        {
+            id = Idparam
+
+        };
+        var i = await studentservices.DeleteStudent(stu).ConfigureAwait(false);
+
+        if (i > 0)
+        {
+            Message = "Successfully deleted!";
+
+            stu = new Students();
+            btnsave = false;
+
+        }
+
+        studentlist = await studentservices.StudentGetData();
+    }
+
+    private async void UpdateStudent()
+    {
+        var studentData = new Students
+        {
+            id = stu.id,
+            fname = stu.fname,
+            mi = stu.mi,
+            lname = stu.lname,
+            bdate = stu.bdate,
+            address = stu.address,
+            email = stu.email
+        };
+
+        var i = await studentservices.UpdateStudent(studentData).ConfigureAwait(false);
+
+        if (i > 0)
+        {
+            Message = "Successfully updated!";
+
+            stu = new Students();
+            btnsave = false;
+
+        }
+        studentlist = await studentservices.StudentGetData();
+    }
+
+}
